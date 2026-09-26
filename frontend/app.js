@@ -461,7 +461,7 @@ function renderSidebar() {
  
   el.innerHTML = `
     <div class="brand">
-      <div class="brand-mark">${ICONS.shield}</div>
+      <img src="sentinel_logo.svg" alt="Sentinel logo" class="brand-logo" />
       <div>
         <div class="brand-name">Sentinel</div>
         <div class="brand-sub">SECURITY AI</div>

@@ -180,18 +180,16 @@ button, input, select { font-family: inherit; }
   gap: 11px;
   padding: 22px 10px 20px;
 }
-.brand-mark {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  background: var(--blue-500);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.brand-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
   flex-shrink: 0;
+  background: rgba(255,255,255,0.12);
+  border-radius: 12px;
 }
-.brand-mark svg { color: #fff; width: 22px; height: 22px; }
-.brand-name { font-size: 17px; font-weight: 700; color: #fff; letter-spacing: .2px; line-height: 1.1; }
-.brand-sub  { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 1.6px; text-transform: uppercase; margin-top: 1px; }
+.brand-name { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: .2px; line-height: 1.1; }
+.brand-sub  { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 1.6px; text-transform: uppercase; margin-top: 1px; }
 
 .nav-section-label {
   font-size: 10px; font-weight: 600;
