@@ -7,17 +7,18 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="layout">
-    <!-- Sidebar -->
+  <div class="app-shell">
+    <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle navigation">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2.5 5h15M2.5 10h15M2.5 15h15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+    <div class="sidebar-scrim" id="sidebar-scrim"></div>
     <aside class="sidebar" id="sidebar"></aside>
-
-    <!-- Main -->
-    <main class="main" id="main-content">
+    <div class="main">
       <header class="topbar" id="topbar"></header>
       <div class="page-body" id="page-body"></div>
-    </main>
+    </div>
   </div>
-
+  <div class="toast-stack" id="toast-stack"></div>
   <script src="app.js"></script>
 </body>
 </html>

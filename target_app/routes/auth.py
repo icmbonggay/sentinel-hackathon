@@ -14,17 +14,15 @@ class LoginRequest(BaseModel):
 def login(body: LoginRequest):
     conn = get_connection()
 
-    # FIXED: parameterised query prevents SQL injection (Sentinel F-01)
-    row = conn.execute(
-        "SELECT * FROM users WHERE username = ? AND password = ?",
-        (body.username, body.password),
-    ).fetchone()
+    # VULNERABLE: SQLi - Sentinel F-01
+    query = f"SELECT * FROM users WHERE username='{body.username}' AND password='{body.password}'"
+    row = conn.execute(query).fetchone()
     conn.close()
 
     if row is None:
         return {"error": "Invalid credentials"}
 
     return {
-        "token": f"mock-session-token-{row['id']}",
+        "token": "mock-session-token-abc123",
         "user": dict(row),
     }

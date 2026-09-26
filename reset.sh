@@ -6,7 +6,7 @@
 #   1. Copies the pristine vulnerable originals back over the live route files.
 #   2. Reinitialises the SQLite database with seed data.
 #
-# Note: findings.json is written/initialised by POST /start, not by this script.
+# Note: findings.json is cleared here so the frontend always starts at step 1.
 #
 # Usage:
 #   bash reset.sh
@@ -16,6 +16,10 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 ROUTES="$REPO_ROOT/target_app/routes"
 ORIGINALS="$ROUTES/_originals"
+
+echo "==> Clearing previous findings..."
+rm -f "$REPO_ROOT/findings.json"
+echo "    findings.json -> cleared"
 
 echo "==> Restoring vulnerable route files..."
 cp "$ORIGINALS/auth.py"    "$ROUTES/auth.py"
