@@ -29,8 +29,8 @@
     },
     "root_cause": "The login query is built by string-formatting user input directly into SQL, so an attacker can terminate the intended query and inject arbitrary SQL logic (e.g. OR '1'='1') to bypass authentication.",
     "recommended_remediation": "Replace the raw string query with a parameterised query or ORM call so that user input is always treated as data, never as SQL syntax.",
-    "status": "fixed",
-    "retest_result": "Patch was applied but the vulnerability is still reproducible. Retest evidence: {'control_payload': {'username': 'alice', 'password': 'definitely_wrong_password'}, 'control_response': {'error': 'Invalid credentials'}, 'exploit_payload': {'username': 'alice', 'password': \"wrong' OR '1'='1' --\"}, 'exploit_response': {'token': 'mock-session-token-abc123', 'user': {'id': 1, 'username': 'alice', 'password': 'alice123', 'email': 'alice@example.com'}}}"
+    "status": "vulnerable",
+    "retest_result": null
   },
   {
     "finding_id": "F-02",
@@ -58,8 +58,8 @@
     },
     "root_cause": "The /profile/{user_id} endpoint returns the requested profile with no check that the authenticated user is the owner, allowing any unauthenticated or authenticated caller to read any user's data by simply supplying a different numeric ID.",
     "recommended_remediation": "Verify that the authenticated user's ID matches the requested user_id before returning profile data, and return 403 Forbidden for any mismatched request.",
-    "status": "fixed",
-    "retest_result": "Patch was applied but the app appears broken. Post-patch smoke test could not reach app: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=5)"
+    "status": "verified",
+    "retest_result": "Re-ran attack after patching; vulnerability no longer reproducible."
   },
   {
     "finding_id": "F-03",
@@ -68,13 +68,13 @@
     "affected_component": "target_app/routes/utils.py :: GET /lookup",
     "description": "OS Command Injection in Diagnostic Lookup Endpoint",
     "evidence": {
-      "payload": "127.0.0.1; echo SENTINEL_CMDI_14357f37",
-      "marker_injected": "SENTINEL_CMDI_14357f37",
-      "raw_output": "PING 127.0.0.1 (127.0.0.1): 56 data bytes\n64 bytes from 127.0.0.1: icmp_seq=0 ttl=64 time=0.027 ms\n\n--- 127.0.0.1 ping statistics ---\n1 packets transmitted, 1 packets received, 0.0% packet loss\nround-trip min/avg/max/stddev = 0.027/0.027/0.027/nan ms\nSENTINEL_CMDI_14357f37\n"
+      "payload": "127.0.0.1& echo SENTINEL_CMDI_1fcf1ddc",
+      "marker_injected": "SENTINEL_CMDI_1fcf1ddc",
+      "raw_output": "\nPinging 127.0.0.1 with 32 bytes of data:\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\n\nPing statistics for 127.0.0.1:\n    Packets: Sent = 1, Received = 1, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\nSENTINEL_CMDI_1fcf1ddc\n"
     },
     "root_cause": "The /lookup endpoint passes the raw 'host' query parameter to a shell command via subprocess (or os.system) without sanitisation, allowing an attacker to append shell metacharacters and execute arbitrary OS commands.",
     "recommended_remediation": "Pass the host argument as a list element to subprocess.run with shell=False, which prevents shell interpretation of metacharacters, or validate the input strictly against a hostname/IP allowlist.",
-    "status": "fixed",
-    "retest_result": "Patch was applied but the app appears broken. Post-patch smoke test could not reach app: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=5)"
+    "status": "verified",
+    "retest_result": "Re-ran attack after patching; vulnerability no longer reproducible."
   }
 ]

