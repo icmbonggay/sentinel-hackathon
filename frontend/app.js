@@ -467,6 +467,20 @@ subprocess.run(["ping", "-c", "1", host], shell=False, ...)</span>`;
   return '<span class="c-grey">// No patch preview available</span>';
 }
 
+function buildSourcePanel(original, patched) {
+  return `
+    <div class="source-compare">
+      <div class="source-col">
+        <div class="source-col-label source-label-original">Original (vulnerable)</div>
+        <pre class="code-block source-pre">${esc(original)}</pre>
+      </div>
+      <div class="source-col">
+        <div class="source-col-label source-label-patched">Patched</div>
+        <pre class="code-block source-pre">${esc(patched)}</pre>
+      </div>
+    </div>`;
+}
+
 function buildRetestBanner(f) {
   if (!f.retest_result) return '';
   const isVerified = f.status === 'verified';
@@ -519,6 +533,11 @@ function buildFindingCard(f) {
             <h4>Before / After</h4>
             <div class="code-block">${buildFixSnippet(f)}</div>
           </div>
+          ${(f.status === 'fixed' || f.status === 'verified') ? `
+          <div class="detail-section">
+            <h4>Source files</h4>
+            <div class="source-compare-container"></div>
+          </div>` : ''}
         </div>
       </div>
       ${buildRetestBanner(f)}
@@ -532,9 +551,30 @@ function buildFindingCard(f) {
       </div>
     </div>`;
 
-  // Toggle expand
-  card.querySelector('.finding-card-header').addEventListener('click', () => {
+  // Toggle expand — fetch source for fixed/verified findings on first open
+  card.querySelector('.finding-card-header').addEventListener('click', async () => {
+    const wasOpen = card.classList.contains('open');
     card.classList.toggle('open');
+    const isNowOpen = !wasOpen;
+
+    if (isNowOpen && (f.status === 'fixed' || f.status === 'verified')) {
+      const container = card.querySelector('.source-compare-container');
+      // Only fetch once — skip if already populated
+      if (container && !container.dataset.loaded) {
+        container.dataset.loaded = 'loading';
+        container.innerHTML = `<div class="source-loading">Loading source…</div>`;
+        try {
+          const res = await fetch(`${API}/source/${encodeURIComponent(f.finding_id)}`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const { original, patched } = await res.json();
+          container.innerHTML = buildSourcePanel(original, patched);
+          container.dataset.loaded = 'done';
+        } catch (err) {
+          container.innerHTML = `<div class="source-error">Could not load source: ${esc(err.message)}</div>`;
+          delete container.dataset.loaded; // allow retry on next expand
+        }
+      }
+    }
   });
 
   // Fix button

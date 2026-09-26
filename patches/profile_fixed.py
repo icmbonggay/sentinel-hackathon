@@ -6,8 +6,8 @@ router = APIRouter()
 
 # Mock token -> user_id map matching the seed data and the auth route's token
 _TOKEN_TO_USER: dict[str, int] = {
-    "mock-session-token-abc123": 1,  # alice
-    "mock-session-token-bob456": 2,  # bob
+    "mock-session-token-1": 1,  # alice
+    "mock-session-token-2": 2,  # bob
 }
 
 

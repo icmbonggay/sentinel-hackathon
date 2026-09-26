@@ -46,11 +46,11 @@ FINDINGS_FILE = REPO_ROOT / "findings.json"
 PATCHES_DIR = REPO_ROOT / "patches"
 ROUTES_DIR  = REPO_ROOT / "target_app" / "routes"
 
-# Map finding_id -> (patch filename, live route filename)
+# Map finding_id -> (patch filename, live route filename, route module name)
 PATCH_MAP = {
-    "F-01": ("auth_fixed.py",    "auth.py"),
-    "F-02": ("profile_fixed.py", "profile.py"),
-    "F-03": ("utils_fixed.py",   "utils.py"),
+    "F-01": ("auth_fixed.py",    "auth.py",    "auth"),
+    "F-02": ("profile_fixed.py", "profile.py", "profile"),
+    "F-03": ("utils_fixed.py",   "utils.py",   "utils"),
 }
 
 # ---------------------------------------------------------------------------
@@ -206,7 +206,7 @@ def apply_fix(
     if finding_id not in PATCH_MAP:
         raise ValueError(f"No patch mapping defined for finding id '{finding_id}'")
 
-    patch_filename, route_filename = PATCH_MAP[finding_id]
+    patch_filename, route_filename, module_name = PATCH_MAP[finding_id]
     patch_src  = PATCHES_DIR / patch_filename
     route_dest = ROUTES_DIR  / route_filename
 
@@ -221,6 +221,25 @@ def apply_fix(
         return Finding(**target)
 
     shutil.copy2(patch_src, route_dest)
+
+    # --- RELOAD: tell the target app to reload the patched module now ---
+    # This must succeed before TEST so that the running app serves the new
+    # code rather than the in-memory copy of the old (vulnerable) code.
+    try:
+        reload_resp = requests.post(
+            f"{base_url}/internal/reload/{module_name}",
+            timeout=10,
+        )
+        reload_resp.raise_for_status()
+    except requests.RequestException as exc:
+        target["status"] = "fixed"
+        target["retest_result"] = (
+            f"Patch was copied but the reload request to "
+            f"/internal/reload/{module_name} failed: {exc}. "
+            "TEST was not executed against potentially stale code."
+        )
+        _save_findings([Finding(**f) for f in raw_findings])
+        return Finding(**target)
 
     # --- TEST: smoke-test the app is alive ---
     # For F-01 (auth patch) verify a valid login still works.

@@ -674,3 +674,46 @@ html, body { height: 100%; background: var(--main-bg); color: var(--text); }
   z-index: 100;
 }
 .help-fab:hover { background: #0f2344; }
+
+/* ─── Source compare (before / after full files) ───────────────────── */
+.source-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 760px) {
+  .source-compare { grid-template-columns: 1fr; }
+}
+
+.source-col { display: flex; flex-direction: column; min-width: 0; }
+
+.source-col-label {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 1.1px; text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: 0;
+}
+.source-label-original {
+  background: rgba(239,68,68,0.12);
+  color: var(--critical);
+}
+.source-label-patched {
+  background: rgba(16,185,129,0.12);
+  color: var(--success);
+}
+
+.source-pre {
+  border-radius: 0 0 9px 9px !important;
+  max-height: 380px;
+  overflow: auto;
+  white-space: pre;
+  margin: 0;
+  flex: 1;
+}
+
+.source-loading, .source-error {
+  font-size: 13px; color: var(--muted);
+  padding: 14px 0;
+}
+.source-error { color: var(--critical); }

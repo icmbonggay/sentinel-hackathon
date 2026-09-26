@@ -33,16 +33,19 @@ class Finding(BaseModel):
         Build a Finding from one of the attack scripts' return dicts plus
         the two human-written analysis fields.
 
-        The attack result's `title` doubles as the short description.
+        description is the first sentence of root_cause so it is distinct
+        from the title.  Falls back to the title if root_cause is empty.
         Status starts as 'vulnerable' because this factory is only called
         when vulnerable=True.
         """
+        first_sentence = root_cause.split(".")[0].strip() + "." if root_cause else ""
+        description = first_sentence if first_sentence and first_sentence != "." else result["title"]
         return cls(
             finding_id=result["finding_id"],
             title=result["title"],
             severity=result["severity"],
             affected_component=result["affected_component"],
-            description=result["title"],
+            description=description,
             evidence=result.get("evidence"),
             root_cause=root_cause,
             recommended_remediation=remediation,

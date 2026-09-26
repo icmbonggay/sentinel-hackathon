@@ -25,6 +25,6 @@ def login(body: LoginRequest):
         return {"error": "Invalid credentials"}
 
     return {
-        "token": "mock-session-token-abc123",
+        "token": f"mock-session-token-{row['id']}",
         "user": dict(row),
     }

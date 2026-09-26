@@ -28,6 +28,7 @@ import shutil
 from pathlib import Path
 
 from mcp.server.mcpserver import MCPServer
+from sentinel.state_machine import apply_fix
 
 # ---------------------------------------------------------------------------
 # Path constants — everything is relative to the repo root so the server
@@ -142,13 +143,41 @@ def propose_patch(finding_id: str, patched_code: str) -> str:
         app_healthy = False
         smoke = f"error – could not reach app: {exc}"
 
+    if not app_healthy:
+        return json.dumps({
+            "finding_id": finding_id,
+            "patch_written_to": str(patch_dest.relative_to(REPO_ROOT)),
+            "live_route_updated": str(route_dest.relative_to(REPO_ROOT)),
+            "smoke_test": smoke,
+            "app_healthy": False,
+            "sentinel_updated": False,
+            "error": "Smoke test failed — Sentinel finding not updated.",
+        })
+
+    # Invoke the normal Sentinel RELOAD → RETEST → VERIFY pipeline so the
+    # finding state in findings.json is updated exactly as the frontend path.
+    # apply_fix() will re-copy the patch (harmless) then reload, retest, and
+    # persist the result — no logic is duplicated here.
+    try:
+        updated_finding = apply_fix(finding_id)
+        sentinel_result = {
+            "sentinel_updated": True,
+            "status": updated_finding.status,
+            "retest_result": updated_finding.retest_result,
+        }
+    except Exception as exc:
+        sentinel_result = {
+            "sentinel_updated": False,
+            "error": f"apply_fix() raised: {exc}",
+        }
+
     return json.dumps({
         "finding_id": finding_id,
         "patch_written_to": str(patch_dest.relative_to(REPO_ROOT)),
         "live_route_updated": str(route_dest.relative_to(REPO_ROOT)),
         "smoke_test": smoke,
         "app_healthy": app_healthy,
-        "next_step": "call run_retest to confirm the vulnerability is gone",
+        **sentinel_result,
     })
 
 
