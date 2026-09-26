@@ -11,6 +11,7 @@ Orchestrates the full Sentinel assessment lifecycle:
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 from typing import Optional
@@ -21,6 +22,19 @@ from sentinel.attacks.cmdi import attack as cmdi_attack
 from sentinel.attacks.idor import attack as idor_attack
 from sentinel.attacks.sqli import attack as sqli_attack
 from sentinel.models import Finding
+
+# ---------------------------------------------------------------------------
+# Runtime configuration (overridable via environment variables)
+# ---------------------------------------------------------------------------
+
+TARGET_URL = os.environ.get("TARGET_URL", "http://localhost:8001")
+
+# Ordered list of attack module descriptors exported to the frontend
+ATTACK_MODULES = [
+    {"id": "F-01", "name": "SQL Injection",      "severity": "Critical"},
+    {"id": "F-02", "name": "IDOR",               "severity": "High"},
+    {"id": "F-03", "name": "Command Injection",  "severity": "Critical"},
+]
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -105,7 +119,7 @@ def _load_raw() -> list[dict]:
 # Public API
 # ---------------------------------------------------------------------------
 
-def start_assessment(base_url: str = "http://localhost:8001") -> list[Finding]:
+def start_assessment(base_url: str = TARGET_URL) -> list[Finding]:
     """
     SCAN phase.
 
@@ -173,7 +187,7 @@ def get_findings() -> list[Finding]:
 
 def apply_fix(
     finding_id: str,
-    base_url: str = "http://localhost:8001",
+    base_url: str = TARGET_URL,
 ) -> Finding:
     """
     REMEDIATE -> TEST -> RETEST -> VERIFY pipeline for a single finding.
@@ -208,21 +222,32 @@ def apply_fix(
 
     shutil.copy2(patch_src, route_dest)
 
-    # --- TEST: confirm the app still accepts a valid login after patching ---
+    # --- TEST: smoke-test the app is alive ---
+    # For F-01 (auth patch) verify a valid login still works.
+    # For F-02/F-03 the login endpoint is not affected by those patches, so
+    # we only check that the app is reachable (HTTP 200 on any known endpoint).
     app_healthy = False
     health_error: Optional[str] = None
     try:
-        health = requests.post(
-            f"{base_url}/login",
-            json={"username": "alice", "password": "alice123"},
-            timeout=5,
-        )
-        app_healthy = health.status_code == 200 and "token" in health.json()
-        if not app_healthy:
-            health_error = (
-                f"Post-patch smoke test failed: status={health.status_code} "
-                f"body={health.text[:200]}"
+        if finding_id == "F-01":
+            # Auth patch – confirm a legitimate login still succeeds
+            health = requests.post(
+                f"{base_url}/login",
+                json={"username": "alice", "password": "alice123"},
+                timeout=5,
             )
+            app_healthy = health.status_code == 200 and "token" in health.json()
+            if not app_healthy:
+                health_error = (
+                    f"Post-patch login smoke test failed: status={health.status_code} "
+                    f"body={health.text[:200]}"
+                )
+        else:
+            # Non-auth patch – just confirm the app is reachable
+            health = requests.get(f"{base_url}/docs", timeout=5)
+            app_healthy = health.status_code == 200
+            if not app_healthy:
+                health_error = f"App not reachable after patch: status={health.status_code}"
     except requests.RequestException as exc:
         health_error = f"Post-patch smoke test could not reach app: {exc}"
 

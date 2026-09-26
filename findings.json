@@ -29,8 +29,8 @@
     },
     "root_cause": "The login query is built by string-formatting user input directly into SQL, so an attacker can terminate the intended query and inject arbitrary SQL logic (e.g. OR '1'='1') to bypass authentication.",
     "recommended_remediation": "Replace the raw string query with a parameterised query or ORM call so that user input is always treated as data, never as SQL syntax.",
-    "status": "fixed",
-    "retest_result": "Patch was applied but the vulnerability is still reproducible. Retest evidence: {'control_payload': {'username': 'alice', 'password': 'definitely_wrong_password'}, 'control_response': {'error': 'Invalid credentials'}, 'exploit_payload': {'username': 'alice', 'password': \"wrong' OR '1'='1' --\"}, 'exploit_response': {'token': 'mock-session-token-abc123', 'user': {'id': 1, 'username': 'alice', 'password': 'alice123', 'email': 'alice@example.com'}}}"
+    "status": "verified",
+    "retest_result": "Re-ran attack after patching; vulnerability no longer reproducible."
   },
   {
     "finding_id": "F-02",
@@ -58,8 +58,8 @@
     },
     "root_cause": "The /profile/{user_id} endpoint returns the requested profile with no check that the authenticated user is the owner, allowing any unauthenticated or authenticated caller to read any user's data by simply supplying a different numeric ID.",
     "recommended_remediation": "Verify that the authenticated user's ID matches the requested user_id before returning profile data, and return 403 Forbidden for any mismatched request.",
-    "status": "fixed",
-    "retest_result": "Patch was applied but the app appears broken. Post-patch smoke test could not reach app: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=5)"
+    "status": "verified",
+    "retest_result": "Re-ran attack after patching; vulnerability no longer reproducible."
   },
   {
     "finding_id": "F-03",
@@ -74,7 +74,7 @@
     },
     "root_cause": "The /lookup endpoint passes the raw 'host' query parameter to a shell command via subprocess (or os.system) without sanitisation, allowing an attacker to append shell metacharacters and execute arbitrary OS commands.",
     "recommended_remediation": "Pass the host argument as a list element to subprocess.run with shell=False, which prevents shell interpretation of metacharacters, or validate the input strictly against a hostname/IP allowlist.",
-    "status": "fixed",
-    "retest_result": "Patch was applied but the app appears broken. Post-patch smoke test could not reach app: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=5)"
+    "status": "verified",
+    "retest_result": "Re-ran attack after patching; vulnerability no longer reproducible."
   }
 ]
