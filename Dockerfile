@@ -12,5 +12,6 @@ RUN pip install --no-cache-dir \
 # Copy the full codebase
 COPY . .
 
-# Default command — overridden per service in Railway via the start command setting
-CMD ["uvicorn", "sentinel.main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN chmod +x start.sh
+
+CMD ["sh", "start.sh"]
