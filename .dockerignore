@@ -1,0 +1,10 @@
+.git
+.bob/
+bob_sessions/
+__pycache__
+**/__pycache__
+*.pyc
+*.db
+findings.json
+.DS_Store
+.venv
