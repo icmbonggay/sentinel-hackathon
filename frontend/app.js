@@ -592,63 +592,82 @@ function heroCardHTML() {
   const stepLabels = ["Recon", "Attack", "Analyze", "Remediate", "Verify"];
   const running = state.startingAssessment;
   const complete = state.everStarted && total > 0 && verified === total;
- 
+
   let pillLabel = "ASSESSMENT NOT STARTED";
   let dotClass = "";
-  if (running) { pillLabel = "ASSESSMENT RUNNING"; dotClass = "live"; }
-  else if (complete) { pillLabel = "ALL FINDINGS VERIFIED"; dotClass = "done"; }
-  else if (state.everStarted) { pillLabel = "DEFENSIVE PERIMETER ACTIVE · REMEDIATION IN PROGRESS"; dotClass = "live"; }
- 
-  let subtitle = "Click New assessment to have Bob 2.0 attack, analyze, and verify fixes for the target application.";
+  if (running) {
+    pillLabel = "ASSESSMENT RUNNING";
+    dotClass = "live";
+  } else if (complete) {
+    pillLabel = "ALL FINDINGS VERIFIED";
+    dotClass = "done";
+  } else if (state.everStarted) {
+    pillLabel = "DEFENSIVE PERIMETER ACTIVE · REMEDIATION IN PROGRESS";
+    dotClass = "live";
+  }
+
+  let subtitle =
+    "Click New assessment to have Bob 2.0 attack, analyze, and verify fixes for the target application.";
+
   if (state.everStarted && !running) {
     const ago = timeAgo(state.assessmentStartedAt);
     subtitle = `${ago ? `Started ${ago}` : "Loaded from a previous run"} · Bob 2.0 · ${verified}/${total} vulnerabilities resolved`;
   } else if (running) {
     subtitle = "Bob 2.0 is attacking the target application now…";
   }
- 
+
   return `
     <div class="hero-card">
       <div class="hero-top">
         <div class="hero-icon">${ICONS.pulse}</div>
+
         <div class="hero-meta">
-          <div class="status-pill"><span class="status-dot ${dotClass}"></span>${pillLabel}</div>
+          <div class="status-pill">
+            <span class="status-dot ${dotClass}"></span>${pillLabel}
+          </div>
           <h2 class="hero-title">Target Application — Full Security Assessment</h2>
           <p class="hero-subtitle">${subtitle}</p>
         </div>
-        <div class="stepper">
-          ${steps
-            .map((s, i) => {
-              const circle = s === "done" ? `${ICONS.check}` : i + 1;
-              // 4 lines: t goes 0 → 1 across them, producing light-to-dark colour progression
-              let line = "";
-              if (i < steps.length - 1) {
-                const t = i / (steps.length - 2); // 0, 0.33, 0.67, 1
-                const isDone = steps[i + 1] !== "pending" || s === "done";
-                const lineStyle = isDone
-                  // done: light steel-blue (#5a9fd4) → deep navy-blue (#0f2f7a)
-                  ? `background:linear-gradient(90deg,
-                      rgba(${Math.round(90 - 50*t)},${Math.round(159 - 80*t)},${Math.round(212 - 90*t)},1) 0%,
-                      rgba(${Math.round(26 - 11*t)},${Math.round(77 - 30*t)},${Math.round(184 - 62*t)},1) 100%);
-                     box-shadow:0 0 ${Math.round(4 + 3*t)}px rgba(20,60,160,${(0.20 + 0.20*t).toFixed(2)});`
-                  // pending: light grey (#dde3ed) → mid grey (#b0bbc8)
-                  : `background:rgba(${Math.round(221 - 30*t)},${Math.round(227 - 30*t)},${Math.round(237 - 30*t)},1);`;
-                line = `<div class="step-line ${isDone ? "done" : ""}" style="${lineStyle}"></div>`;
-              }
-              return `<div class="step">
-                <div class="step-circle ${s}">${circle}</div>
-                <div class="step-label ${s !== "pending" ? "on" : ""}">${stepLabels[i]}</div>
-              </div>${line}`;
-            })
-            .join("")}
+
+        <div class="hero-progress-actions">
+          <div class="stepper">
+            ${steps
+              .map((s, i) => {
+                const circle = s === "done" ? `${ICONS.check}` : i + 1;
+                let line = "";
+
+                if (i < steps.length - 1) {
+                  const t = i / (steps.length - 2);
+                  const isDone = steps[i + 1] !== "pending" || s === "done";
+
+                  const lineStyle = isDone
+                    ? `background:linear-gradient(90deg,
+                        rgba(${Math.round(90 - 50 * t)},${Math.round(159 - 80 * t)},${Math.round(212 - 90 * t)},1) 0%,
+                        rgba(${Math.round(26 - 11 * t)},${Math.round(77 - 30 * t)},${Math.round(184 - 62 * t)},1) 100%);
+                       box-shadow:0 0 ${Math.round(4 + 3 * t)}px rgba(20,60,160,${(0.20 + 0.20 * t).toFixed(2)});`
+                    : `background:rgba(${Math.round(221 - 30 * t)},${Math.round(227 - 30 * t)},${Math.round(237 - 30 * t)},1);`;
+
+                  line = `<div class="step-line ${isDone ? "done" : ""}" style="${lineStyle}"></div>`;
+                }
+
+                return `<div class="step">
+                  <div class="step-circle ${s}">${circle}</div>
+                  <div class="step-label ${s !== "pending" ? "on" : ""}">${stepLabels[i]}</div>
+                </div>${line}`;
+              })
+              .join("")}
+          </div>
+
+          ${
+            !state.everStarted
+              ? `<div class="hero-start-wrap">
+                  <button class="btn btn-hero" id="hero-start-btn" ${state.connected === false ? "disabled" : ""}>
+                    ${running ? '<span class="spinner"></span>' : ""} Start assessment
+                  </button>
+                </div>`
+              : ""
+          }
         </div>
-        ${
-          !state.everStarted
-            ? `<button class="btn btn-hero" id="hero-start-btn" ${state.connected === false ? "disabled" : ""}>
-                ${running ? '<span class="spinner"></span>' : ''} Start assessment
-              </button>`
-            : ""
-        }
       </div>
     </div>
   `;

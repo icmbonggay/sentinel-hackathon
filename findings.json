@@ -68,9 +68,9 @@
     "affected_component": "target_app/routes/utils.py :: GET /lookup",
     "description": "The /lookup endpoint passes the raw 'host' query parameter to a shell command via subprocess (or os.",
     "evidence": {
-      "payload": "127.0.0.1 & echo SENTINEL_CMDI_6c638d35",
-      "marker_injected": "SENTINEL_CMDI_6c638d35",
-      "raw_output": "\nPinging 127.0.0.1 with 32 bytes of data:\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\n\nPing statistics for 127.0.0.1:\n    Packets: Sent = 1, Received = 1, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\nSENTINEL_CMDI_6c638d35\n"
+      "payload": "127.0.0.1 & echo SENTINEL_CMDI_81b255db",
+      "marker_injected": "SENTINEL_CMDI_81b255db",
+      "raw_output": "\nPinging 127.0.0.1 with 32 bytes of data:\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\n\nPing statistics for 127.0.0.1:\n    Packets: Sent = 1, Received = 1, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\nSENTINEL_CMDI_81b255db\n"
     },
     "root_cause": "The /lookup endpoint passes the raw 'host' query parameter to a shell command via subprocess (or os.system) without sanitisation, allowing an attacker to append shell metacharacters and execute arbitrary OS commands.",
     "recommended_remediation": "Pass the host argument as a list element to subprocess.run with shell=False, which prevents shell interpretation of metacharacters, or validate the input strictly against a hostname/IP allowlist.",
